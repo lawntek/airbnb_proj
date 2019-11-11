@@ -56,6 +56,15 @@ class Listings:
         if DATT:
             self.dropCols()
             self.cleaner()
+
+    def corrHeatMap(self):
+        corr = self.df.select_dtypes(include = 'number').drop('id', axis = 1).corr()
+        mask = np.zeros_like(corr, dtype = np.bool)
+        mask[np.tril_indices_from(mask)] = True
+        f, ax = plt.subplots(figsize = (11, 9))
+        cmap = sns.diverging_palette(220, 10, as_cmap = True)
+        sns.heatmap(corr, mask = mask, cmap = cmap, vmax = 0.3, center = 0, square = True, linewidths = 0.5, cbar_kws = {'shrink': 0.5})
+        plt.show()
     
     def readListings(self, filename):
 
@@ -221,7 +230,7 @@ class Listings:
             for am in l:
                 amenities.add(am)
         for amenity in amenities:
-            if amenity != '':
+            if amenity != "" and 'missing' not in amenity:
                 self.df[amenity] = self.df.amenities.apply(lambda x: amenity in x)
 
         self.df = self.df.drop('amenities', axis = 1)
