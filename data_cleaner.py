@@ -19,40 +19,50 @@ class Modeler:
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.x, self.y, test_size = test_size)
 
     def linreg(self):
-        reg = LinearRegression().fit(self.x_train, self.y_train)
-        print("Train R2", reg.score(self.x_train, self.y_train))
-        preds = reg.predict(self.x_test)
-        print("Test R2", r2_score(self.y_test, preds))
+        model = LinearRegression(normalize = True)
+        model.fit(self.x_train, self.y_train)
+        train_preds = model.predict(self.x_train)
+        test_preds = model.predict(self.x_test)
+
+        train_mse = mse(self.y_train, train_preds)
+        test_mse = mse(self.y_test, test_preds)
+        print(train_mse, test_mse)
+        print("Train R2", r2_score(self.y_train, train_preds))
+        print("Test R2", r2_score(self.y_test, test_preds))
 
     def lassoer(self):
-        lasso_model = Lasso()
+        lasso_model = Lasso(normalize = True)
         lasso_model.fit(self.x_train, self.y_train)
         train_preds = lasso_model.predict(self.x_train)
         test_preds = lasso_model.predict(self.x_test)
 
-        #train_mse = mse(self.y_train, train_preds)
-        #test_mse = mse(self.y_test, test_preds)
-        #print(train_mse, test_mse)
+        train_mse = mse(self.y_train, train_preds)
+        test_mse = mse(self.y_test, test_preds)
+        print(train_mse, test_mse)
         print("Train R2", r2_score(self.y_train, train_preds))
         print("Test R2", r2_score(self.y_test, test_preds))
 
 
     def ridger(self):
-        ridge_model = Ridge()
+        ridge_model = Ridge(normalize = True)
         ridge_model.fit(self.x_train, self.y_train)
         train_preds = ridge_model.predict(self.x_train)
         test_preds = ridge_model.predict(self.x_test)
 
-        #train_mse = mse(self.y_train, train_preds)
-        #test_mse = mse(self.y_test, test_preds)
-        #print(train_mse, test_mse)
+        train_mse = mse(self.y_train, train_preds)
+        test_mse = mse(self.y_test, test_preds)
+        print(train_mse, test_mse)
         print("Train R2", r2_score(self.y_train, train_preds))
         print("Train R2", r2_score(self.y_test, test_preds))
 
+    def spliner(self):
+        pass
+
 class Listings:
-    def __init__(self, filename = 'chicago_listings.csv', DATT = True):
+    def __init__(self, filename = 'chicago_listings.csv', groupAmenities = False, DATT = True):
         # pd.set_option('display.max_columns', 500)
         self.readListings(filename)
+        self.groupAmenities = groupAmenities
         if DATT:
             self.dropCols()
             self.cleaner()
@@ -218,28 +228,32 @@ class Listings:
         #set kmeans neighborhoods using estimated best k=8 option
         self.longLat(k = 8)
 
-        amenities = set()
-        for listing in self.df.amenities:
-            replacements = ['{', '}', '"']
-            for r in replacements:
-                listing = listing.replace(r, '').lower()
-            spacers = ['/', ':', ';', '-', '(', ')', '&']
-            for s in spacers:
-                listing = listing.replace(s, '_')
-            l = listing.split(',')
-            for am in l:
-                amenities.add(am)
-        for amenity in amenities:
-            if amenity != "" and 'missing' not in amenity:
-                self.df[amenity] = self.df.amenities.apply(lambda x: amenity in x)
+        if self.groupAmenities:
+            self.df.amenities = self.df.amenities.apply(lambda x: len(x.split(',')))
+        else:
+            amenities = set()
+            for listing in self.df.amenities:
+                replacements = ['{', '}', '"']
+                for r in replacements:
+                    listing = listing.replace(r, '').lower()
+                spacers = ['/', ':', ';', '-', '(', ')', '&']
+                for s in spacers:
+                    listing = listing.replace(s, '_')
+                l = listing.split(',')
+                for am in l:
+                    amenities.add(am)
+            for amenity in amenities:
+                if amenity != "" and 'missing' not in amenity:
+                    self.df[amenity] = self.df.amenities.apply(lambda x: amenity in x)
 
-        self.df = self.df.drop('amenities', axis = 1)
-        self.columns = self.df.columns.values.tolist()
+            self.df = self.df.drop('amenities', axis = 1)
+            self.columns = self.df.columns.values.tolist()
 
         #Drop outliers past the 95% quantile
         q = self.df.price.quantile(0.95)
         self.df = self.df[self.df.price <= q]
 
         self.y = self.df.price
-        self.x = self.df.drop('price', axis = 1)
-
+        self.x = self.df.drop(['price','id', 'longitude', 'latitude'], axis = 1)
+        self.y.to_csv(r'y.csv', index = None, header = True)
+        self.x.to_csv(r'x.csv', index = None, header = True)
