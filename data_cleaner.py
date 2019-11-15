@@ -18,42 +18,59 @@ class Modeler:
     def split_data(self, test_size = 0.3):
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.x, self.y, test_size = test_size)
 
-    def linreg(self):
-        model = LinearRegression(normalize = True)
-        model.fit(self.x_train, self.y_train)
-        train_preds = model.predict(self.x_train)
-        test_preds = model.predict(self.x_test)
+    def plotModel(self):
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (12, 4))
+        fig.suptitle("Predictions vs. True Values", fontsize = 14, y = 1)
+        plt.subplots_adjust(top = 0.93, wspace = 0)
+        ax1.scatter(self.y_test, self.test_preds, s = 2, alpha = 0.5)
+        ax1.plot(list(range(0, int(self.y_test.max()) + 10)), color = 'black', linestyle = '--')
+        ax1.set_title("Test Set")
+        ax1.set_xlabel("True Values")
+        ax1.set_ylabel("Predictions")
+        ax2.scatter(self.y_train, self.train_preds, s = 2, alpha = 0.5)
+        ax2.plot(list(range(0, int(self.y_train.max()) + 10)), color = 'black', linestyle = '--')
+        ax2.set_title("Train Set")
+        ax2.set_xlabel("True Values")
+        ax2.set_ylabel("")
 
-        train_mse = mse(self.y_train, train_preds)
-        test_mse = mse(self.y_test, test_preds)
+        plt.show()
+
+    def linreg(self):
+        self.model = LinearRegression(normalize = True)
+        self.model.fit(self.x_train, self.y_train)
+        self.train_preds = self.model.predict(self.x_train)
+        self.test_preds = self.model.predict(self.x_test)
+
+        train_mse = mse(self.y_train, self.train_preds)
+        test_mse = mse(self.y_test, self.test_preds)
         print(train_mse, test_mse)
-        print("Train R2", r2_score(self.y_train, train_preds))
-        print("Test R2", r2_score(self.y_test, test_preds))
+        print("Train R2", r2_score(self.y_train, self.train_preds))
+        print("Test R2", r2_score(self.y_test, self.test_preds))
 
     def lassoer(self):
-        lasso_model = Lasso(normalize = True)
-        lasso_model.fit(self.x_train, self.y_train)
-        train_preds = lasso_model.predict(self.x_train)
-        test_preds = lasso_model.predict(self.x_test)
+        self.model = Lasso(normalize = True)
+        self.model.fit(self.x_train, self.y_train)
+        self.train_preds = self.model.predict(self.x_train)
+        self.test_preds = self.model.predict(self.x_test)
 
-        train_mse = mse(self.y_train, train_preds)
-        test_mse = mse(self.y_test, test_preds)
+        train_mse = mse(self.y_train, self.train_preds)
+        test_mse = mse(self.y_test, self.test_preds)
         print(train_mse, test_mse)
-        print("Train R2", r2_score(self.y_train, train_preds))
-        print("Test R2", r2_score(self.y_test, test_preds))
+        print("Train R2", r2_score(self.y_train, self.train_preds))
+        print("Test R2", r2_score(self.y_test, self.test_preds))
 
 
     def ridger(self):
-        ridge_model = Ridge(normalize = True)
-        ridge_model.fit(self.x_train, self.y_train)
-        train_preds = ridge_model.predict(self.x_train)
-        test_preds = ridge_model.predict(self.x_test)
+        self.model = Ridge(normalize = True)
+        self.model.fit(self.x_train, self.y_train)
+        self.train_preds = self.model.predict(self.x_train)
+        self.test_preds = self.model.predict(self.x_test)
 
-        train_mse = mse(self.y_train, train_preds)
-        test_mse = mse(self.y_test, test_preds)
+        train_mse = mse(self.y_train, self.train_preds)
+        test_mse = mse(self.y_test, self.test_preds)
         print(train_mse, test_mse)
-        print("Train R2", r2_score(self.y_train, train_preds))
-        print("Train R2", r2_score(self.y_test, test_preds))
+        print("Train R2", r2_score(self.y_train, self.train_preds))
+        print("Train R2", r2_score(self.y_test, self.test_preds))
 
     def spliner(self):
         pass
@@ -105,7 +122,7 @@ class Listings:
         kmeans = KMeans(n_clusters = k, init = 'k-means++')
         labels = kmeans.fit_predict(self.df[['latitude', 'longitude']].copy())
         if showplot:
-            sns.scatterplot(self.df.latitude, self.df.longitude)
+            sns.scatterplot(self.df.latitude, self.df.longitude, alpha=0.3)
             sns.scatterplot(kmeans.cluster_centers_[:,0], kmeans.cluster_centers_[:,1])
             plt.show()
         self.df['kmeans_neighborhoods'] = labels
@@ -253,7 +270,10 @@ class Listings:
         q = self.df.price.quantile(0.95)
         self.df = self.df[self.df.price <= q]
 
+        self.df = self.df.drop(['id', 'longitude', 'latitude'], axis = 1)
+        
+
         self.y = self.df.price
-        self.x = self.df.drop(['price','id', 'longitude', 'latitude'], axis = 1)
+        self.x = self.df.drop(['price'], axis = 1)
         self.y.to_csv(r'y.csv', index = None, header = True)
         self.x.to_csv(r'x.csv', index = None, header = True)
