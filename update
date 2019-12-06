@@ -1,0 +1,443 @@
+import inline as inline
+import matplotlib
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+#import lightgbm as lgb
+
+from sklearn.linear_model import LinearRegression, LassoCV, RidgeCV, ElasticNetCV
+
+from sklearn.model_selection import train_test_split, RandomizedSearchCV, KFold
+from sklearn.linear_model import LinearRegression, Lasso, Ridge
+from sklearn.metrics import mean_squared_error as mse
+from sklearn.metrics import r2_score
+
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+
+class Modeler:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def split_data(self, test_size=0.3):
+        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.x, self.y, test_size=test_size)
+
+    def plotModel(self):
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+        fig.suptitle("Predictions vs. True Values", fontsize=14, y=1)
+        plt.subplots_adjust(top=0.93, wspace=0)
+        ax1.scatter(self.y_test, self.test_preds, s=2, alpha=0.5)
+        ax1.plot(list(range(0, int(self.y_test.max()) + 10)), color='black', linestyle='--')
+        ax1.set_title("Test Set")
+        ax1.set_xlabel("True Values")
+        ax1.set_ylabel("Predictions")
+        ax2.scatter(self.y_train, self.train_preds, s=2, alpha=0.5)
+        ax2.plot(list(range(0, int(self.y_train.max()) + 10)), color='black', linestyle='--')
+        ax2.set_title("Train Set")
+        ax2.set_xlabel("True Values")
+        ax2.set_ylabel("")
+        plt.show()
+
+    def linreg(self):
+        self.model = LinearRegression(normalize=True)
+        self.model.fit(self.x_train, self.y_train)
+        self.train_preds = self.model.predict(self.x_train)
+        self.test_preds = self.model.predict(self.x_test)
+
+        train_mse = mse(self.y_train, self.train_preds)
+        test_mse = mse(self.y_test, self.test_preds)
+        print(train_mse, test_mse)
+        print("Train R2", r2_score(self.y_train, self.train_preds))
+        print("Test R2", r2_score(self.y_test, self.test_preds))
+
+    def lassoer(self):
+        self.model = Lasso(normalize=True)
+        self.model.fit(self.x_train, self.y_train)
+        self.train_preds = self.model.predict(self.x_train)
+        self.test_preds = self.model.predict(self.x_test)
+
+        train_mse = mse(self.y_train, self.train_preds)
+        test_mse = mse(self.y_test, self.test_preds)
+        print(train_mse, test_mse)
+        print("Train R2", r2_score(self.y_train, self.train_preds))
+        print("Test R2", r2_score(self.y_test, self.test_preds))
+
+    def ridger(self):
+        self.model = Ridge(normalize=True)
+        self.model.fit(self.x_train, self.y_train)
+        self.train_preds = self.model.predict(self.x_train)
+        self.test_preds = self.model.predict(self.x_test)
+
+        train_mse = mse(self.y_train, self.train_preds)
+        test_mse = mse(self.y_test, self.test_preds)
+        print(train_mse, test_mse)
+        print("Train R2", r2_score(self.y_train, self.train_preds))
+        print("Train R2", r2_score(self.y_test, self.test_preds))
+
+    def spliner(self):
+        pass
+
+
+
+
+        # Visualizing the Polymonial Regression results
+    def viz_polymonial(self):
+        from sklearn.preprocessing import PolynomialFeatures
+        print("this is being read by the computer!!!")
+        poly_reg = PolynomialFeatures(degree=10)
+        X_poly = poly_reg.fit_transform(self.x_train)
+        pol_reg = LinearRegression()
+        pol_reg.fit(X_poly, self.y_train)
+        plt.scatter(self.x_train, self.y_train, color='red')
+        plt.plot(self.x_train, pol_reg.predict(poly_reg.fit_transform(self.x_train)), color='blue')
+        plt.title('Truth or Bluff (Linear Regression)')
+        plt.xlabel('Position level')
+        plt.ylabel('Salary')
+        plt.show()
+        return
+
+        # plt.scatter(self.x_train, self.y_train, color='blue')
+        #
+        # plt.plot(self.x_train, lin2.predict(poly.fit_transform(self.x_train)), color='red')
+        # plt.title('Polynomial Regression')
+        # plt.xlabel('Temperature')
+        # plt.ylabel('Pressure')
+        #
+        # plt.show()
+
+
+    # def cross_validation(self, cv=10):
+    #     kf = KFold(n_splits=cv, random_state=None, shuffle=True)
+    #     rmse_scores = []
+    #     alphas = list(np.logspace(-15, 15, 151, base=2))
+    #     for train_index, test_index in kf.split(self.x_train):
+    #         X_trn, X_tst = self.x_train.iloc[train_index], self.x_train.iloc[test_index]
+    #         y_trn, y_tst = self.y_train.iloc[train_index], self.y_train.iloc[test_index]
+    #
+    #         ### straight ridge
+    #         ridge1 = RidgeCV(alphas=alphas, cv=10, normalize=True)
+    #         ridge1.fit(self.x_train, self.y_train)
+    #
+    #         y_fit = ridge1.predict(X_trn)
+    #         resid = y_trn - y_fit
+    #
+    #         model = lgb.LGBMRegressor(objective='regression')
+    #
+    #         tuning_parameters = {
+    #             'learning_rate': [0.01, 0.05, 0.1],
+    #             'n_estimators': [250, 500, 750, 1000, 1500],
+    #             'max_depth': [2, 3, 4],
+    #             'subsample': [0.6, 0.8, 1.0],
+    #         }
+    #
+    #         gb_search = RandomizedSearchCV(model, tuning_parameters, n_iter=16, cv=5,
+    #                                        return_train_score=False, n_jobs=4, random_state=42)
+    #
+    #         gb_search.fit(X_trn, resid)
+    #
+    #         abst = gb_search.best_estimator_
+    #
+    #         y_pred = ridge1.predict(X_tst) + abst.predict(X_tst)
+    #         mse = np.sum((y_pred - y_tst) ** 2) / len(y_pred)
+    #         rmse_score = np.sqrt(mse)
+    #         print(rmse_score)
+    #         rmse_scores.append(rmse_score)
+    #
+    #     print("testing this function")
+
+    # def CubicSpline(self):
+    #     self.model = csaps.MultivariateCubicSmoothingSpline(self.x_train, self.y_train, smooth=0.988)
+    #     self.model.fit(self.x_train, self.y_train)
+        # self.train_preds = self.model.predict(self.x_train)
+        # self.test_preds = self.model.predict(self.x_test)
+        # train_mse = mse(self.y_train, self.train_preds)
+        # test_mse = mse(self.y_test, self.test_preds)
+        # print(train_mse, test_mse)
+        # print("Train R2", r2_score(self.y_train, self.train_preds))
+        # print("Train R2", r2_score(self.y_test, self.test_preds))
+
+class Listings:
+    def __init__(self, filename='/Users/joelnorthrup/Desktop/listings_summary.csv', groupAmenities=False, DATT=True):
+        # pd.set_option('display.max_columns', 500)
+        self.readListings(filename)
+        self.groupAmenities = groupAmenities
+        if DATT:
+            self.dropCols()
+            self.cleaner()
+
+    def corrHeatMap(self):
+        corr = self.df.select_dtypes(include='number').drop('id', axis=1).corr()
+        mask = np.zeros_like(corr, dtype=np.bool)
+        mask[np.tril_indices_from(mask)] = True
+        f, ax = plt.subplots(figsize=(11, 9))
+        cmap = sns.diverging_palette(220, 10, as_cmap=True)
+        sns.heatmap(corr, mask=mask, cmap=cmap, vmax=0.3, center=0, square=True, linewidths=0.5,
+                    cbar_kws={'shrink': 0.5})
+        plt.show()
+
+    def readListings(self, filename):
+
+        # suppress low_memory warning--file isn't large enough for
+        # any significant processing impact.
+        self.df = pd.read_csv(filename, low_memory=False)
+        self.df.set_index('id')
+        self.columns = self.df.columns.values.tolist()
+
+    def longLat(self, k=10, showplot=False):
+        '''Use KMeans to categorize lat/long into our own version of neighborhoods.
+        Set k = -1 to graph error for k=1:20. Otherwise, set K and returns kmeans.
+        8 was found to be a good number.'''
+        if k <= 0:
+            print("Fitting 20 ks")
+            cluster_sum_squares = []
+            for i in range(1, 20):
+                print("iteration", i)
+                kmeans = KMeans(n_clusters=i, init='k-means++')
+                kmeans.fit(self.df[['latitude', 'longitude']].copy())
+                cluster_sum_squares.append(kmeans.inertia_)
+            plt.plot(range(1, 20), cluster_sum_squares)
+            plt.xlabel("# Clusters")
+            plt.ylabel("Cluster Sum of Squares")
+            plt.show()
+            return kmeans
+
+        kmeans = KMeans(n_clusters=k, init='k-means++')
+        labels = kmeans.fit_predict(self.df[['latitude', 'longitude']].copy())
+        if showplot:
+            sns.scatterplot(self.df.latitude, self.df.longitude, alpha=0.3)
+            sns.scatterplot(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1])
+            plt.show()
+        self.df['kmeans_neighborhoods'] = labels
+        self.df.kmeans_neighborhoods = self.df.kmeans_neighborhoods.astype('category')
+        self.df.drop(['latitude', 'longitude'], axis=1)
+        return kmeans
+
+    def nullVals(self, column):
+        return self.df[column].isna().sum()
+
+    def fillNulls(self, column, newNull):
+        self.df[column] = self.df[column].fillna(newNull)
+
+    def dollarToFloat(self, column):
+        if type(self.df[column][0]) != str:
+            print("Data is not a string")
+        else:
+            self.df[column] = self.df[column].str.replace('$', '').str.replace(',', '').astype(float)
+
+    def dropCols(self, toDrop=[
+        'summary', 'space', 'description', 'neighborhood_overview',
+        'notes', 'transit', 'access', 'interaction',
+        'house_rules', 'thumbnail_url', 'host_about', 'license',
+        'listing_url', 'scrape_id', 'last_scraped', 'name',
+        'medium_url', 'picture_url', 'xl_picture_url', 'host_id', 'host_since',
+        'host_location', 'host_acceptance_rate', 'host_neighbourhood',
+        'host_listings_count', 'host_total_listings_count',
+        'host_url', 'host_name', 'host_thumbnail_url', 'host_picture_url',
+        'neighbourhood', 'neighbourhood_cleansed', 'neighbourhood_group_cleansed',
+        'city', 'state', 'street', 'zipcode', 'market', 'smart_location', 'country_code',
+        'country', 'is_location_exact',
+        'weekly_price', 'monthly_price', 'square_feet',
+        'minimum_nights',
+        'maximum_nights',
+        'calendar_updated', 'calendar_last_scraped', 'first_review', 'last_review',
+        'jurisdiction_names', 'experiences_offered',
+        'host_verifications']):
+        self.df = self.df.drop(toDrop, axis=1)
+        self.columns = self.df.columns.values.tolist()
+
+#    'minimum_minimum_nights', 'maximum_minimum_nights', 'minimum_maximum_nights', 'maximum_maximum_nights','number_of_reviews_ltm',
+    def cleaner(self):
+
+        # convert property types to an index
+        self.property_types = self.df.property_type.unique().tolist()
+        self.property_types_index = {}
+        for i in range(len(self.property_types)):
+            self.property_types_index[self.property_types[i]] = i
+        self.df.property_type = self.df.property_type.apply(lambda x: self.property_types_index[x]).astype('category')
+
+        # convert room types to an index
+        self.room_types = self.df.room_type.unique().tolist()
+        self.room_types_index = {}
+        for i in range(len(self.room_types)):
+            self.room_types_index[self.room_types[i]] = i
+        self.df.room_type = self.df.room_type.apply(lambda x: self.room_types_index[x]).astype('category')
+
+        # convert bed types to an index
+        self.bed_types = self.df.bed_type.unique().tolist()
+        self.bed_types_index = {}
+        for i in range(len(self.bed_types)):
+            self.bed_types_index[self.bed_types[i]] = i
+        self.df.bed_type = self.df.bed_type.apply(lambda x: self.bed_types_index[x]).astype('category')
+
+        # convert cancellation policy to an index
+        self.cancellation_policies = self.df.cancellation_policy.unique().tolist()
+        self.cancellation_policies_index = {}
+        for i in range(len(self.cancellation_policies)):
+            self.cancellation_policies_index[self.cancellation_policies[i]] = i
+        self.df.cancellation_policy = self.df.cancellation_policy.apply(
+            lambda x: self.cancellation_policies_index[x]).astype('category')
+
+        # convert response time to an index
+        self.response_times = self.df.host_response_time.unique().tolist()
+        self.response_times_index = {}
+        for i in range(len(self.response_times)):
+            self.response_times_index[self.response_times[i]] = i
+        self.df.host_response_time = self.df.host_response_time.apply(lambda x: self.response_times_index[x]).astype(
+            'category')
+
+        # convert binary values to bool
+        self.df.host_is_superhost = self.df.host_is_superhost.apply(lambda x: x == 't')
+        self.df.host_has_profile_pic = self.df.host_has_profile_pic.apply(lambda x: x == 't')
+        self.df.host_identity_verified = self.df.host_identity_verified.apply(lambda x: x == 't')
+        self.df.has_availability = self.df.has_availability.apply(lambda x: x == 't')
+        self.df.availability_30 = self.df.availability_30.apply(lambda x: x == 't')
+        self.df.availability_60 = self.df.availability_60.apply(lambda x: x == 't')
+        self.df.availability_90 = self.df.availability_90.apply(lambda x: x == 't')
+        self.df.availability_365 = self.df.availability_365.apply(lambda x: x == 't')
+        self.df.requires_license = self.df.requires_license.apply(lambda x: x == 't')
+        self.df.instant_bookable = self.df.instant_bookable.apply(lambda x: x == 't')
+        self.df.is_business_travel_ready = self.df.is_business_travel_ready.apply(lambda x: x == 't')
+        self.df.require_guest_profile_picture = self.df.require_guest_profile_picture.apply(lambda x: x == 't')
+        self.df.require_guest_phone_verification = self.df.require_guest_phone_verification.apply(lambda x: x == 't')
+
+        # convert dollars to floats
+        self.dollarToFloat('price')
+        self.dollarToFloat('extra_people')
+        self.fillNulls('cleaning_fee', '0')  # Assuming missing cleaning fees indicates 0 charge.
+        self.dollarToFloat('cleaning_fee')
+        self.fillNulls('security_deposit', '0')
+        self.dollarToFloat('security_deposit')
+
+        # convert host response rate to float
+        self.df.host_response_rate = self.df.host_response_rate.str.replace('%', '').astype(float) / 100
+        self.fillNulls('host_response_rate', self.df.host_response_rate.mean())
+
+        # clean up other null vals
+        self.fillNulls('bathrooms', 1.0)
+        self.fillNulls('bedrooms', 1.0)
+        self.fillNulls('beds', 1.0)
+
+        self.fillNulls('review_scores_rating', self.df.review_scores_rating.mean())
+        self.fillNulls('review_scores_accuracy', self.df.review_scores_accuracy.mean())
+        self.fillNulls('review_scores_cleanliness', self.df.review_scores_cleanliness.mean())
+        self.fillNulls('review_scores_checkin', self.df.review_scores_checkin.mean())
+        self.fillNulls('review_scores_communication', self.df.review_scores_communication.mean())
+        self.fillNulls('review_scores_location', self.df.review_scores_location.mean())
+        self.fillNulls('review_scores_value', self.df.review_scores_value.mean())
+        self.fillNulls('reviews_per_month', 0)
+
+        # set kmeans neighborhoods using estimated best k=8 option
+        self.longLat(k=8)
+
+        if self.groupAmenities:
+            self.df.amenities = self.df.amenities.apply(lambda x: len(x.split(',')))
+        else:
+            amenities = set()
+            for listing in self.df.amenities:
+                replacements = ['{', '}', '"']
+                for r in replacements:
+                    listing = listing.replace(r, '').lower()
+                spacers = ['/', ':', ';', '-', '(', ')', '&']
+                for s in spacers:
+                    listing = listing.replace(s, '_')
+                l = listing.split(',')
+                for am in l:
+                    amenities.add(am)
+            for amenity in amenities:
+                if amenity != "" and 'missing' not in amenity:
+                    self.df[amenity] = self.df.amenities.apply(lambda x: amenity in x)
+
+            self.df = self.df.drop('amenities', axis=1)
+            self.columns = self.df.columns.values.tolist()
+
+        # Drop outliers past the 95% quantile
+        q = self.df.price.quantile(0.95)
+        self.df = self.df[self.df.price <= q]
+
+        self.df = self.df.drop(['id', 'longitude', 'latitude'], axis=1)
+
+        self.y = self.df.price
+        self.x = self.df.drop(['price'], axis=1)
+        self.y.to_csv('y.csv', index=None, header=True)
+        self.x.to_csv('x.csv', index=None, header=True)
+
+
+
+
+
+def test():
+    listing = Listings()
+    listing.readListings('/Users/joelnorthrup/Desktop/listings_summary.csv')
+    listing.longLat()
+    listing.dropCols()
+    #listing.corrHeatMap()
+    listing.cleaner()
+    model = Modeler(listing.x , listing.y)
+    model.split_data(.3)
+    model.viz_polymonial()
+    model.plotModel()
+
+
+    #i, j = np.meshgrid(*listing.x, indexing='ij')
+
+    #csaps.MultivariateCubicSmoothingSpline(listing.x, listing.y, smooth=0.988)
+    #plt.show()
+    #ysmth = sp(listing.x)
+
+    #fig = plt.figure()
+    #ax = fig.add_subplot(111, projection='3d')
+
+    #ax.plot_wireframe(j, i, listing.y, linewidths=0.5, color='r')
+    #ax.scatter(j, i, listing.y, s=5, c='r')
+
+    #ax.plot_surface(j, i, ysmth, linewidth=0, alpha=1.0)
+
+
+test()
+
+
+
+#
+#
+# model_6 = get_natural_cubic_spline_model(, y, minval=min(x), maxval=max(x), n_knots=6)
+# model_15 = get_natural_cubic_spline_model(x, y, minval=min(x), maxval=max(x), n_knots=15)
+# y_est_6 = model_6.predict(x)
+# y_est_15 = model_15.predict(x)
+#
+#
+# plt.plot(x, y, ls='', marker='.', label='originals')
+# plt.plot(x, y_est_6, marker='.', label='n_knots = 6')
+# plt.plot(x, y_est_15, marker='.', label='n_knots = 15')
+# plt.legend(); plt.show()
+
+
+# def test2():
+#     import numpy as np
+#
+#     import matplotlib.pyplot as plt
+#     from mpl_toolkits.mplot3d import Axes3D
+#
+#     import csaps
+#
+#     xdata = [np.linspace(-3, 3, 61), np.linspace(-3.5, 3.5, 51)]
+#     i, j = np.meshgrid(*xdata, indexing='ij')
+#
+#     ydata = (3 * (1 - j) ** 2. * np.exp(-(j ** 2) - (i + 1) ** 2) - 10 * (j / 5 - j ** 3 - i ** 5) * np.exp(-j ** 2 - i ** 2) - 1 / 3 * np.exp(-(j + 1) ** 2 - i ** 2))
+#
+#     np.random.seed(12345)
+#     noisy = ydata + (np.random.randn(*ydata.shape) * 0.75)
+#
+#     sp = csaps.MultivariateCubicSmoothingSpline(xdata, noisy, smooth=0.988)
+#     ysmth = sp(xdata)
+#
+#     fig = plt.figure()
+#     ax = fig.add_subplot(111, projection='3d')
+#
+#     ax.plot_wireframe(j, i, noisy, linewidths=0.5, color='r')
+#     ax.scatter(j, i, noisy, s=5, c='r')
+#     ax.plot_surface(j, i, ysmth, linewidth=0, alpha=1.0)
+#     plt.show()
+# test2()
+
